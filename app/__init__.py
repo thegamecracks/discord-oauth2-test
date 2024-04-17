@@ -4,10 +4,9 @@ import os
 import anyio
 import discord
 from starlette.applications import Starlette
-from starlette.responses import JSONResponse
-from starlette.routing import Route
 
 from .bot import Bot
+from .routes import ROUTES
 
 
 @contextlib.asynccontextmanager
@@ -20,14 +19,8 @@ async def lifespan(app):
         yield
 
 
-async def homepage(request):
-    return JSONResponse({"hello": "world"})
-
-
 app = Starlette(
     debug=True,
-    routes=[
-        Route("/", homepage),
-    ],
+    routes=ROUTES,
     lifespan=lifespan,
 )
