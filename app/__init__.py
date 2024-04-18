@@ -10,6 +10,7 @@ from anyio.abc import TaskGroup
 from starlette.applications import Starlette
 
 from .bot import Bot
+from .database import run_migrations
 from .routes import ROUTES
 
 
@@ -33,6 +34,9 @@ async def lifespan(app) -> AsyncIterator[State]:
         asyncpg.create_pool("postgres://postgres@db", password=pg_password) as pool,
         bot,
     ):
+        async with pool.acquire() as conn, conn.transaction():
+            await run_migrations(conn)  # type: ignore
+
         tg.start_soon(bot.start, os.environ.pop("BOT_TOKEN"))
         yield {"bot": bot, "http_client": http_client, "pool": pool, "task_group": tg}
 
