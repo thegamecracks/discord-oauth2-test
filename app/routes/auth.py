@@ -101,7 +101,7 @@ class AuthorizationFlow:
 
         async with DatabaseClient(request.state.pool).acquire() as query:
             await query.add_discord_oauth(
-                user["id"],
+                int(user["id"]),
                 access_token=access_token,
                 token_type=token_type,
                 expires_in=expires_in,
