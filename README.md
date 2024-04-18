@@ -6,3 +6,7 @@ to handle [Discord's OAuth2](https://discord.com/developers/docs/topics/oauth2) 
 ## Usage
 
 TODO
+
+```sh
+docker compose up --build --exit-code-from app
+```
