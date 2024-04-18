@@ -4,8 +4,10 @@ import time
 from dataclasses import dataclass
 from typing import Iterable
 
+import anyio
 import discord
 import httpx
+from anyio.abc import TaskGroup
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
@@ -40,6 +42,7 @@ class AuthorizationFlow:
     def create_oauth_url(
         self,
         *,
+        tg: TaskGroup,
         scopes: Iterable[str] = ("identify", "guilds"),
         state: str | None = None,
     ) -> str:
@@ -50,6 +53,7 @@ class AuthorizationFlow:
             state=state,
             expires_at=time.monotonic() + self.expires_after,
         )
+        tg.start_soon(self._invalidate_delayed, state)
 
         return discord.utils.oauth_url(
             CLIENT_ID,
@@ -108,6 +112,10 @@ class AuthorizationFlow:
         del self._links[state]
 
         return JSONResponse("Successfully authorized!")
+
+    async def _invalidate_delayed(self, state: str) -> None:
+        await anyio.sleep(self.expires_after)
+        self._links.pop(state, None)
 
 
 auth_flow = AuthorizationFlow()
