@@ -2,6 +2,9 @@ services:
   app:
     build:
       context: .
+    depends_on:
+      db:
+        condition: service_healthy
     environment:
       - BOT_TOKEN=${BOT_TOKEN:?}
       - CLIENT_ID=${CLIENT_ID:?}
@@ -9,3 +12,28 @@ services:
       - REDIRECT_URI=${REDIRECT_URI:?}
     ports:
       - '8000:8000'
+
+  db:
+    # https://github.com/docker-library/docs/blob/master/postgres/README.md
+    image: postgres:16
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+        window: 30s
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?}
+    expose:
+      - '5432'
+    healthcheck:
+      test: ["CMD", "pg_isready", "--quiet", "--username", "postgres"]
+      interval: 2s
+      timeout: 1s
+      retries: 5
+    volumes:
+      - type: volume
+        source: db
+        target: /var/lib/postgresql/data
+
+volumes:
+  db:
