@@ -12,7 +12,7 @@ class Invite(commands.Cog):
     @commands.is_owner()
     async def invite(self, ctx: Context) -> None:
         url = auth_flow.create_oauth_url(tg=self.bot.tg)
-        await ctx.reply(url)
+        await ctx.reply(url, delete_after=60)
 
 
 async def setup(bot: Bot):
