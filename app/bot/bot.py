@@ -2,7 +2,9 @@ import asyncpg
 import discord
 from discord.ext import commands
 
-EXTENSIONS = ()
+EXTENSIONS = (
+    ".cogs.invite",
+)
 
 
 class Bot(commands.Bot):
@@ -14,3 +16,6 @@ class Bot(commands.Bot):
     async def setup_hook(self) -> None:
         for ext in EXTENSIONS:
             await self.load_extension(ext, package=__package__)
+
+
+class Context(commands.Context[Bot]): ...
