@@ -105,6 +105,8 @@ class AuthorizationFlow:
                 scope=scope,
             )
 
+        del self._links[state]
+
         return JSONResponse("Successfully authorized!")
 
 
