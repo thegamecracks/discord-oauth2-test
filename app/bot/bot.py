@@ -1,3 +1,4 @@
+import asyncpg
 import discord
 from discord.ext import commands
 
@@ -5,9 +6,10 @@ EXTENSIONS = ()
 
 
 class Bot(commands.Bot):
-    def __init__(self) -> None:
+    def __init__(self, *, pool: asyncpg.Pool) -> None:
         intents = discord.Intents.default()
         super().__init__(command_prefix=commands.when_mentioned, intents=intents)
+        self.pool = pool
 
     async def setup_hook(self) -> None:
         for ext in EXTENSIONS:

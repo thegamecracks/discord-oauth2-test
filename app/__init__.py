@@ -25,14 +25,13 @@ class State(TypedDict):
 async def lifespan(app) -> AsyncIterator[State]:
     discord.utils.setup_logging()
 
-    bot = Bot()
     pg_password = os.environ.pop("POSTGRES_PASSWORD")
 
     async with (
         anyio.create_task_group() as tg,
         httpx.AsyncClient() as http_client,
         asyncpg.create_pool("postgres://postgres@db", password=pg_password) as pool,
-        bot,
+        Bot(pool=pool) as bot,
     ):
         async with pool.acquire() as conn, conn.transaction():
             await run_migrations(conn)  # type: ignore
