@@ -31,7 +31,7 @@ async def lifespan(app) -> AsyncIterator[State]:
         anyio.create_task_group() as tg,
         httpx.AsyncClient() as http_client,
         asyncpg.create_pool("postgres://postgres@db", password=pg_password) as pool,
-        Bot(pool=pool) as bot,
+        Bot(pool=pool, tg=tg) as bot,
     ):
         async with pool.acquire() as conn, conn.transaction():
             await run_migrations(conn)  # type: ignore
