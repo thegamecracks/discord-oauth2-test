@@ -9,7 +9,11 @@ import httpx
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
+from app.constants import DISCORD_BASE_URL
+from app.database import DatabaseClient
+
 CLIENT_ID = os.environ["CLIENT_ID"]
+CLIENT_SECRET = os.environ.pop("CLIENT_SECRET")
 REDIRECT_URI = os.environ["REDIRECT_URI"]
 
 
@@ -68,6 +72,7 @@ class AuthorizationFlow:
         client: httpx.AsyncClient = request.state.http_client
         response = await client.post(
             "https://discord.com/api/oauth2/token",
+            auth=(CLIENT_ID, CLIENT_SECRET),
             data={
                 "grant_type": "authorization_code",
                 "code": code,
@@ -75,6 +80,32 @@ class AuthorizationFlow:
             },
         )
         response.raise_for_status()
+
+        data = response.json()
+        access_token: str = data["access_token"]
+        token_type: str = data["token_type"]
+        expires_in: int = data["expires_in"]
+        refresh_token: str = data["refresh_token"]
+        scope: str = data["scope"]
+
+        response = await client.get(
+            DISCORD_BASE_URL + "/users/@me",
+            headers={"Authorization": f"{token_type} {access_token}"},
+        )
+        response.raise_for_status()
+        user = response.json()
+
+        async with DatabaseClient(request.state.pool).acquire() as query:
+            await query.add_discord_oauth(
+                user["id"],
+                access_token=access_token,
+                token_type=token_type,
+                expires_in=expires_in,
+                refresh_token=refresh_token,
+                scope=scope,
+            )
+
+        return JSONResponse("Successfully authorized!")
 
 
 auth_flow = AuthorizationFlow()
